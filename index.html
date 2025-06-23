@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script src="https://cdn.tailwindcss.com/3.4.4"></script>
+  <title>Таблеточки</title>
+  <style>
+    @font-face {
+      font-family: 'Kurochkalapkoi';
+      src: url('./Kurochkalapkoi.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    /* *{
+      font-family: 'Kurochkalapkoi';
+    } */
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.7/babel.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <script type="text/babel">
+    const tabletochki = [
+      {
+        name: 'Нексиум',
+        description: 'за 30 минут до еды',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Де-нол',
+        description: 'утро/вечер за 15 минут до еды',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Креон',
+        description: 'с каждым приемом пищи',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Трихопол',
+        description: 'утро/вечер через 15 минут после Де-нола',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Флемоксин',
+        description: 'утро/вечер через 60 минут после трихопола',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Креон',
+        description: 'через 60 минут после флемоксина',
+        count: 2,
+        date:[
+          {
+            from: '23.06',
+            to: '2.07'
+          }
+        ]
+      },
+      {
+        name: 'Ганатон',
+        description: 'независимо от еды',
+        count: 3,
+        date:[
+          {
+            from: '03.07',
+            to: '12.07'
+          },
+          {
+            from: '23.07',
+            to: '01.08'
+          },
+          {
+            from: '12.08',
+            to: '21.08'
+          },
+        ]
+      },
+      {
+        name:'Омез',
+        description: 'перед ужином за 30 минут',
+        count: 1,
+        date:[
+          {
+            from: '03.07',
+            to: '3.09'
+          }
+        ]
+      }
+    ]
+    const App = ({user}) => {
+      function getPillsForDate(inputDate) {
+        const dateParts = inputDate.split('-');
+        const formattedDate = `${dateParts[2]}.${dateParts[1]}`;
+        
+        return tabletochki.filter(pill => 
+          pill.date.some(dateRange => {
+            const fromDate = parseDate(dateRange.from);
+            const toDate = parseDate(dateRange.to);
+            const checkDate = parseDate(formattedDate);
+            
+            return checkDate >= fromDate && checkDate <= toDate;
+          })
+        );
+      }
+
+      function parseDate(dateStr) {
+        const [day, month] = dateStr.split('.');
+        return new Date(2025, month - 1, day);
+      }
+      
+      const [selectedTab,setSelectedTab] = React.useState('Сегодня')
+      const PillRow = ({pill,history})=>{
+        const PillCheckbox = ({index})=>{
+          const pillKey = `pill-${pill.name}${pill.description}/2025-${new Date().getMonth()+1}-${new Date().getDate()}/-${index}`
+          const [pillStatus,setPillStatus] = React.useState(!!localStorage.getItem(pillKey))
+          const togglePill = (index)=>{
+            if(history) return
+            if(pillStatus){
+              localStorage.removeItem(pillKey)
+              setPillStatus(false)
+            }else{
+              localStorage.setItem(pillKey,'1')
+              setPillStatus(true)
+            }
+          }
+          return (<div onClick={()=>togglePill(index)} className={`h-8 w-8 border border-white/10 rounded-md ${pillStatus ? "bg-green-500" : ""}`}>
+            
+          </div>)
+        }
+        return (<div className="flex justify-between items-center border border-white/10 p-2 rounded-md">
+          <div className="flex flex-col">
+            <p className="text-xl leading-none">{pill.name}</p>
+            <span>{pill.description}</span>
+          </div>
+          <div className="flex gap-2">{[...Array(pill.count)].map((_,index)=><PillCheckbox key={"pill"+index} index={index} />)}</div>
+        </div>)
+      }
+      return (
+        <div className="h-screen w-screen flex flex-col bg-slate-900 text-slate-50 overflow-x-hidden overflow-y-auto">
+          <div className='flex w-full'>
+            <div onClick={()=>setSelectedTab('Сегодня')} className={`w-full text-[24px] py-3 flex items-center justify-center ${selectedTab === "Сегодня" ? "bg-blue-400" : ""}`}>Сегодня</div>
+            <div onClick={()=>setSelectedTab('История')} className={`w-full text-[24px] py-3 flex items-center justify-center ${selectedTab === "История" ? "bg-blue-400" : ""}`}>История</div>
+          </div>
+          {selectedTab === 'Сегодня' ? <div className="p-3 flex gap-4 flex-col">
+            {getPillsForDate(`2025-${new Date().getMonth()+1}-${new Date().getDate()}`).map((pill,index)=><PillRow key={index} pill={pill} />)}
+          </div> : <div>Это история, но я пока еще её не сделал</div>}
+        </div>
+      );
+    };
+    const webApp = window.Telegram.WebApp;
+    webApp.ready();
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App user={webApp.initDataUnsafe.user} />);
+  </script>
+</body>
+</html>
